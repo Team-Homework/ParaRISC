@@ -12,7 +12,7 @@
 
 硬件进阶：[CPU 复杂结构硬件设计指南：从五级流水线到双发射与 Cache](docs/cpu-hardware-design-guide.md)。
 
-双人分工：[A 后端与正确性，B 前端与系统服务：均衡任务和对接计划](docs/project-ab-plan.md) · [执行清单](docs/todo.md)。
+双人分工：[A 后端与正确性，B 前端与系统服务：均衡任务和对接计划](docs/project-ab-plan.md) · [八周双人实施计划](docs/eight-week-two-person-plan.md) · [执行清单](docs/todo.md)。
 
 端口与性能：[双发射端口预算、资源冲突处理和 IPC 验证方案](docs/port-budget-and-ipc.md)。
 
