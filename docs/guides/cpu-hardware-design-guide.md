@@ -2,11 +2,11 @@
 
 > 面向熟悉 C++、刚学 Chisel 的 ParaRisc 项目组。本文讲设计与实现思路，不要求先读懂一个完整开源 CPU。
 >
-> 前置阅读：[Chisel 零基础速通](chisel-crash-course.md)。项目约束见 [README](../README.md)，旧模拟器迁移见 [迁移文档](simulator-to-chisel-design.md)。
+> 前置阅读：[Chisel 零基础速通](chisel-crash-course.md)。项目约束见 [项目需求](../project-requirements.md)，旧模拟器迁移见 [迁移文档](../research/simulator-to-chisel-design.md)。
 >
 > 图中电路是教学设计，配置数字是算例。课程内存接口、存储面积口径和最终微架构仍以项目正式约定为准。
 
-本项目宽度 2 候选实现的具体端口数量、冲突处理及 IPC 检查见 [端口预算](port-budget-and-ipc.md)；本文中的通道数和 Cache 组织示例以教学说明为主。
+本项目宽度 2 候选实现的具体端口数量、冲突处理及 IPC 检查见 [端口预算](../planning/port-budget-and-ipc.md)；本文中的通道数和 Cache 组织示例以教学说明为主。
 
 ## 0. 阅读地图与图例
 

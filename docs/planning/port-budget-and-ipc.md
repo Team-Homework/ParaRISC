@@ -4,7 +4,7 @@
 >
 > 目标：在连续 Cache 命中、两条独立整数指令充足时，电路具备稳定每拍发射和提交两条的能力；正式 Benchmark 是否达到 **IPC > 1** 及当前 100 分档的 **IPC ≥ 1.0140**，须在课程的统一内存、20 周期延迟和正式统计口径下实测。
 
-配套：[项目约束](../README.md) · [A/B 分工](project-ab-plan.md) · [硬件结构设计](cpu-hardware-design-guide.md)。
+配套：[项目约束](../project-requirements.md) · [A/B 分工](project-ab-plan.md) · [硬件结构设计](../guides/cpu-hardware-design-guide.md)。
 
 ## 1. 先统一“端口”是什么意思
 

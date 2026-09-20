@@ -1,6 +1,6 @@
 # ParaRisc 双人均衡分工：A 后端与正确性，B 前端与系统服务
 
-> A/B 是任务角色，尚未指定人员。本方案以 [项目目标](../README.md) 和 [硬件设计指南](cpu-hardware-design-guide.md) 为依据，替代此前“A 负责整个核心”的分工。执行状态见 [清单](todo.md)。
+> A/B 是任务角色，尚未指定人员。本方案以 [项目目标](../project-requirements.md) 和 [硬件设计指南](../guides/cpu-hardware-design-guide.md) 为依据，替代此前“A 负责整个核心”的分工。执行状态见 [清单](todo.md)。
 
 > 宽度 2 的具体资源端口和冲突规则统一见 [端口预算](port-budget-and-ipc.md)；端口预算变化需双方同步调整接口与测试。
 

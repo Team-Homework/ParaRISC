@@ -4,7 +4,7 @@
 >
 > 本计划基于当前仓库状态制定：仓库现阶段只有设计文档，尚无 Scala/sbt 工程、RTL、测试和评测脚本。因此第 1 周包含工程初始化，不能把任何功能模块视为已经完成。
 
-配套文档：[项目目标](../README.md) · [A/B 分工与接口](project-ab-plan.md) · [执行清单](todo.md) · [双发射端口预算](port-budget-and-ipc.md) · [硬件设计指南](cpu-hardware-design-guide.md)
+配套文档：[项目目标](../project-requirements.md) · [A/B 分工与接口](project-ab-plan.md) · [执行清单](todo.md) · [双发射端口预算](port-budget-and-ipc.md) · [硬件设计指南](../guides/cpu-hardware-design-guide.md)
 
 ## 1. 八周结束时的共同目标
 
