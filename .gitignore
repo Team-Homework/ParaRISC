@@ -1,0 +1,29 @@
+build/
+obj_dir/
+code
+*.o
+*.a
+*.elf
+*.vcd
+*.fst
+# Ignore root crash dumps without hiding RTL or source directories named core.
+/core
+!/core/
+/core.[0-9]*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+
+# Downloaded course hardware tools.
+*.AppImage
+
+# Mill / Scala build and editor caches. Generated submission RTL is tracked.
+/out/
+/.bsp/
+/.bloop/
+/.metals/
+/verilog/.chisel-*/
+
+# Local personal plans and notes
+/.private/
