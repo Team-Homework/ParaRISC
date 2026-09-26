@@ -25,5 +25,19 @@ __pycache__/
 /.metals/
 /verilog/.chisel-*/
 
-# Local personal plans and notes
+# Personal plans and notes (not part of the shared two-person deliverables).
 /.private/
+/docs/planning/b-personal-implementation-plan.md
+
+# Local scratch files and editor state.
+/.scratch/
+/tmp/
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig
+*.rej
