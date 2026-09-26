@@ -1,5 +1,7 @@
 # Chisel 集成
 
+整数执行通路的模块和接线说明见[从 RecursiveCLA32 开始设计整数执行通路](integer-datapath.md)。
+
 Chisel 模板包含严格匹配课程要求的 `student_top` 接口与课程 SRAM 适配器。编辑 [`chisel/src/StudentTop.scala`](../chisel/src/StudentTop.scala)，并将其他 CPU 模块放在 `chisel/src/` 下。初始模板仅输出空闲信号，需要实现 CPU 后才能通过正确性测试或得到有意义的面积与时序结果。
 
 使用 Mill **1.1.2**、Scala **2.13.18**、Chisel 及其编译器插件 **7.7.0**；Chisel 自动获取匹配的 **firtool 1.139.0**。
