@@ -5,6 +5,10 @@ Mill 1.1.2、Scala 2.13.18、Chisel 7.7.0 和配套 firtool 1.139.0。
 版本由 `.mill-version` 和 `build.mill` 固定；依赖已通过实际生成过程验证。
 构建方式参考 [Chisel 官方安装指南](https://www.chisel-lang.org/docs/installation)。
 
+实现基线为 CPU 参考仓库的 **single-issue-chisel v110**（提交 `a922b00`），
+冻结源码位于 `/home/tangz/CPU/single-issue-chisel/reports/area-recovery-2026-10-21/source/`。
+按模块逐步迁移；参考仓库的整机成绩不代表本工程已完成 CPU。
+
 课程工具包位于项目根目录 `cpu2026-tools-x86_64.AppImage`，包含：
 
 - Verilator 5.020
@@ -35,6 +39,7 @@ make rtl          # Chisel -> verilog/generated/student_top.sv
 make build        # 自动生成 RTL，再构建 build/sim
 make              # 自动生成 RTL，并生成 OJ 提交需要的 ./code
 make env-check    # 独立验证完整工具链，产物在 build/env-check/
+make decoder      # 独立生成 Decoder，产物在 build/decoder/rtl/
 ```
 
 `src/pararisc/StudentTop.scala` 提供了符合课程要求的平铺 AXI4-Lite 端口和

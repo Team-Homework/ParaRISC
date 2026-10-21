@@ -1,8 +1,9 @@
 # Fetch 模块
 
 入口为 `src/pararisc/fetch/Frontend.scala` 的 `Frontend(FetchConfig())`。
-逻辑来自相邻 `ParaRisc/single-issue-chisel/src/main/scala/tier2`，参考提交
-`a922b00ea0db34e3bd9f73fd97703d2b43bbb984`。仅迁移前端及必要依赖，
+逻辑来自 CPU 仓库的单发射 v110 冻结源码
+`/home/tangz/CPU/single-issue-chisel/reports/area-recovery-2026-10-21/source/`，
+参考提交 `a922b00ea0db34e3bd9f73fd97703d2b43bbb984`。仅迁移前端及必要依赖，
 未引入执行、访存、重命名或提交模块。当前 `StudentTop` 仍为 CPU 骨架，
 集成时需要连接下述接口。
 
@@ -19,6 +20,11 @@
 
 `FetchConfig` 仅保留前端相关参数和合法性检查，默认值对应参考工程。
 局部逻辑、队列头缓存和 SRAM 访问时序沿用参考实现。
+
+综合属性使用 Chisel 7 的 `annotate(owner)(Seq(...))` 写法，并使用依赖内置的
+`firrtl.AttributeAnnotation(owner.toNamed, "keep_hierarchy = 1")`。
+旧的同名自定义注解已移除，避免与 Chisel 7 内置类型冲突。
+`LocalLogic` 派生模块仍保留层次；v110 的 `LocalMask`、`LocalWord` 仍允许跨层优化。
 
 与参考实现相比，在途请求采用逐项粘滞失效标记，替代 4 位 epoch，避免
 内存响应长期未返回时连续重定向使 epoch 回绕、旧指令重新生效。
@@ -44,20 +50,27 @@
 课程总线；不能直接连接顶层 AXI 引脚。已接受的内存请求在重定向后仍须
 完整返回，前端会消费并丢弃失效响应。内存错误触发断言，暂不提供异常包。
 
-## 生成与验证
+## 生成与验证记录
 
 ```sh
 mill --no-server chisel.compile
 mill --no-server chisel.runMain pararisc.fetch.GenerateFetch build/fetch/rtl
-python3 tests/test_fetch.py
 ```
 
-测试使用 Verilator 和课程 SRAM 行为模型，支持 `MILL`、`VERILATOR`
-环境变量。已有 RTL 时可用 `python3 tests/test_fetch.py --skip-generate`。
-覆盖跨缓存行顺序取指、队列背压、缓存复用、在途缺失期间连续 16 次重定向、
-输出队列清空、正负 JAL、返回预测、条件方向训练、提交与恢复同拍的返回栈。
+RTL 生成器输出的 `build/fetch/rtl/filelist.f` 包含全部子模块；Chisel 7 的断言层
+单独输出在 `verification/`。后续仿真接入时需要同时考虑模块文件列表和断言层。
 
-本次环境中 Mill 缺失且下载源连接超时，因此实际编译和 RTL 生成使用缓存的
-Scala 2.13.12 / Chisel 6.5.0 / firtool 1.62.0，随后通过 Verilator 5.020 仿真。
-项目固定的 Scala 2.13.18 / Chisel 7.7.0 / Mill 1.1.2 尚未在此次环境中验证。
+自定义前端测试脚本及 C++ 测试程序已按用户要求移除。以下仅记录删除前的
+历史验证结果，不能作为后续改动已通过验证的证据：当时使用 Verilator 和课程
+SRAM 模型，启用 `--assert` 及队列头一致性检查，覆盖跨缓存行顺序取指、
+队列背压、缓存复用、在途缺失期间连续 16 次重定向、输出队列清空、正负 JAL、
+返回预测、条件方向训练、提交与恢复同拍的返回栈。
+
+初次迁移使用 Scala 2.13.12 / Chisel 6.5.0 / firtool 1.62.0 验证。
+2026-10-21 完成注解及测试入口适配后，已在项目固定的
+Scala 2.13.18 / Chisel 7.7.0 / Mill 1.1.2 / firtool 1.139.0 下通过编译和 RTL 生成，
+并通过 Verilator 5.020 前端测试。检查了生成 RTL 的模块层次属性，且确认
+缓存错误断言和队列头一致性断言已进入仿真模型。
+本机保留的复核日志位于 `build/fetch/chisel7-check/`，生成 RTL 和历史仿真器位于
+`build/fetch/rtl/`、`build/fetch/obj/`；清理构建目录后不会重新生成这些测试记录。
 以上是前端模块测试，不代表完整 CPU 已通过课程正确性或性能测试。
