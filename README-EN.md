@@ -1,5 +1,7 @@
 # RISC-V CPU Template
 
+The local Chisel setup and toolchain check are documented in [the environment guide](docs/environment.md).
+
 [![Target: RV32IM](https://img.shields.io/badge/target-RV32IM-283272)](https://msyksphinz-self.github.io/riscv-isadoc/)
 [![Simulator: Verilator](https://img.shields.io/badge/simulator-Verilator-4B7BE5)](https://www.veripool.org/verilator/)
 [![Synthesis: Yosys + ASAP7](https://img.shields.io/badge/synthesis-Yosys%20%2B%20ASAP7-f39c12)](https://yosyshq.net/yosys/)

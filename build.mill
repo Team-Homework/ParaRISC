@@ -1,0 +1,15 @@
+//| mill-jvm-version: system
+package build
+
+import mill._
+import mill.scalalib._
+
+object chisel extends ScalaModule {
+  def sources = Task.Sources(mill.api.BuildCtx.workspaceRoot / "src")
+  def scalaVersion = "2.13.18"
+  def chiselVersion = "7.7.0"
+  def mvnDeps = Seq(mvn"org.chipsalliance::chisel:$chiselVersion")
+  def scalacPluginMvnDeps = Seq(mvn"org.chipsalliance:::chisel-plugin:$chiselVersion")
+  def scalacOptions = Seq("-deprecation", "-feature", "-unchecked")
+  def mainClass = Some("pararisc.Generate")
+}

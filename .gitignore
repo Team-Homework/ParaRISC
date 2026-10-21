@@ -17,3 +17,9 @@ __pycache__/
 
 # Downloaded course hardware tools.
 *.AppImage
+
+# Chisel / Mill generated files.
+out/
+.bsp/
+.metals/
+verilog/generated/

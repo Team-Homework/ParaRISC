@@ -27,7 +27,7 @@ ASAP7_LIB ?=
 # ASAP7_LIB = /opt/asap7/lib
 
 # For systems without FUSE, uncomment to extract AppImages at launch:
-# export APPIMAGE_EXTRACT_AND_RUN = 1
+export APPIMAGE_EXTRACT_AND_RUN = 1
 
 # Optional prebuilt simulator. When set, run/test/perf skip RTL compilation.
 # test/perf require the CPU2026-OJ stdin/stdout protocol; perf also requires

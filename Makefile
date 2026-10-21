@@ -29,13 +29,26 @@ Case ?=
 JOBS ?= 4
 MAX_CYCLES ?= 1000000
 LATENCY ?= 10
+MILL ?= mill
+RTL_DIR ?= $(FRAMEWORK_DIR)/verilog/generated
 WAVE ?=
 LOG ?=
 ifneq ($(strip $(BLACKBOXES)),)
 $(error BLACKBOXES has been removed; instantiate sram_fakeram instead)
 endif
 
-.PHONY: code help build run test perf synth clean
+.PHONY: code help rtl env-check build run test perf synth clean
+
+rtl:
+	$(MILL) --no-server chisel.run --out "$(RTL_DIR)"
+
+# Custom filelists (including the isolated environment check) supply their RTL.
+ifeq ($(abspath $(FILELIST)),$(FRAMEWORK_DIR)/verilog/filelist.f)
+build synth: rtl
+endif
+
+env-check:
+	"$(PYTHON)" "$(FRAMEWORK_DIR)/tools/check_env.py" --mill "$(MILL)"
 
 # OJ always builds RTL and collects ./code. SIM affects local run/test/perf only.
 code:
@@ -44,6 +57,7 @@ code:
 	cp -- "$(BUILD)/sim" code
 
 help:
+	@echo 'Chisel: make rtl (generate Verilog); make env-check (isolated full toolchain check)'
 	@echo 'Host prerequisites: Python 3.10+, GNU Make, G++ (C++17), and binutils. No Docker required.'
 	@echo 'Configure APPIMAGE or native VERILATOR/YOSYS/ABC/STA/ASAP7_LIB in config.mk.'
 	@echo 'make build [FILELIST=verilog/filelist.f BUILD=build JOBS=4]'
