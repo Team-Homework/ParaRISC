@@ -10,11 +10,15 @@ object GenerateFetch {
     val directory = Paths.get(args.headOption.getOrElse("build/fetch/rtl"))
       .toAbsolutePath.normalize()
     Files.createDirectories(directory)
+
     ChiselStage.emitSystemVerilogFile(
       new Frontend(FetchConfig(debug = true)),
       Array("--target-dir", directory.toString),
-      Array("--disable-all-randomization", "--strip-debug-info",
-        "--lowering-options=disallowLocalVariables,disallowPackedArrays")
+      Array(
+        "--disable-all-randomization",
+        "--strip-debug-info",
+        "--lowering-options=disallowLocalVariables,disallowPackedArrays"
+      )
     )
   }
 }

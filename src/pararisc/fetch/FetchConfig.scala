@@ -18,6 +18,7 @@ case class FetchConfig(
 ) {
   require(isPow2(lineBytes) && lineBytes >= 8)
   require(isPow2(icBytes) && icBytes >= 2 * lineBytes)
+
   // BTB writes use banks of eight entries and at least one bank-select bit.
   require(isPow2(btbEntries) && btbEntries >= 16 && btbEntries <= 256)
   require(historyBits >= 0 && historyBits <= 2)
