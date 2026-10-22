@@ -30,6 +30,38 @@
 内存响应长期未返回时连续重定向使 epoch 回绕、旧指令重新生效。
 外部重定向同周期还会屏蔽 `out.valid`，在时钟沿清空输出队列。
 
+## 独立分支预测模块
+
+`src/pararisc/fetch/Predictor.scala` 提供 `BranchPredictor(FetchConfig(...))`，
+封装 BTB、方向计数器、局部历史、推测态/提交态 RAS 和响应预解码修正。
+`PredictorCounter`、`PredictorHistory` 仍作为原有局部逻辑单元复用。
+`Frontend` 管理 PC、指令缓存、队列及旧请求失效，并通过以下内部接口连接预测器。
+现有后端接口和 `Training`、`FetchPacket` 的字段保持兼容。
+
+| 接口 | 方向 | 位宽与时序 |
+| --- | --- | --- |
+| `pc` | 输入 | 32 位查询 PC，组合查询，不增加取指流水级 |
+| `prediction` | 输出 | `BranchPrediction`：`next[31:0]`、`history[1:0]`、`callApplied`、`returnApplied`、`rasTop[31:0]`、`rasValid` |
+| `accept` | 输入 | 1 位事件，仅在缓存请求 `valid && ready` 时拉高，触发预测调用/返回的 RAS 更新 |
+| `response` | 输入，Valid | `pc[31:0]`、`inst[31:0]` 和该请求接受时保存的 `prediction`；仅在未失效的缓存响应握手时有效 |
+| `corrected` | 输出 | 32 位组合修正目标；由响应指令、保存的历史/RAS 快照及当前方向表计算 |
+| `redirect` | 输入 | 1 位恢复事件，恢复提交态 RAS；Frontend 同拍禁止新请求并过滤旧响应 |
+| `train` / `commit` | 输入，Valid | 沿用 `Training`，分别更新预测表和提交态 RAS，每个有效时钟沿接受一次 |
+
+Frontend 在接受请求时保存完整 `BranchPrediction`，响应返回后使用该快照。
+`accept`、`response.valid` 是已经完成的握手事件，不能用尚未接受的 `valid`
+代替；背压和失效响应不会触发 RAS 推测更新。`corrected` 本身不依赖
+`response.valid`，因此 Frontend 可先计算目标，再由实际响应握手触发修正。
+`rasTop` 只有在 `rasValid` 时才有语义。
+
+方向计数器及局部历史在 `train.valid` 的接受沿更新；BTB 在该沿寄存分组载荷
+和写掩码，在下一个沿发布表项，保留参考实现额外一周期的更新延迟。
+历史表仅由条件分支训练更新，redirect 不清空历史或 BTB。
+RAS 保留 `rasWriteStages=0/1` 两种写入方式及一级写入时的栈顶旁路，
+响应只补做预测时尚未执行的 push/pop；redirect 恢复优先于推测更新，
+并包含同拍提交的 call/return。上述封装不引入额外状态或流水级，
+面积和时序影响仍须由完整 CPU 的实际综合确认。
+
 ## 后端接口
 
 | 接口 | 方向 | 约定 |
@@ -74,3 +106,40 @@ Scala 2.13.18 / Chisel 7.7.0 / Mill 1.1.2 / firtool 1.139.0 下通过编译和 R
 本机保留的复核日志位于 `build/fetch/chisel7-check/`，生成 RTL 和历史仿真器位于
 `build/fetch/rtl/`、`build/fetch/obj/`；清理构建目录后不会重新生成这些测试记录。
 以上是前端模块测试，不代表完整 CPU 已通过课程正确性或性能测试。
+
+### 2026-10-22：BranchPredictor 封装验证
+
+对照基线为修改前的 `c4b80bd10b5337ad64baf2d45a63126ad9cf6f6a`。
+当前机器未找到 Mill，沙箱外重试下载亦连接超时；没有更改项目固定的
+Chisel 7.7.0 / Mill 1.1.2 配置。此次使用缓存的 Scala 2.13.12、Chisel 6.5.0、
+firtool 1.62.0 和 Verilator 5.020，在忽略的 `build/predictor-20261022/`
+中进行兼容验证。仅隔离副本的 `Cache.scala`、`LocalLogic.scala` 层次属性
+注解适配为 Chisel 6 API，并加入该版本需要的注解定义；维护源码未作这些改动。
+受测 `Frontend.scala`、`Predictor.scala` 与当前源码逐字节一致，
+`source-hashes.json` 保存了全部前端源码的 SHA-256。
+
+| 配置 | historyBits | rasWriteStages | btbEntries | 预测器模型对照 | 新旧 Frontend 逐周期对照 |
+| --- | --- | --- | --- | --- | --- |
+| default | 1 | 1 | 64 | 16,000 周期通过 | 50,000 周期通过，交付 13,417 条指令 |
+| no-history | 0 | 0 | 16 | 16,000 周期通过 | 50,000 周期通过，交付 13,574 条指令 |
+| two-bit-history | 2 | 1 | 256 | 16,000 周期通过 | 50,000 周期通过，交付 11,758 条指令 |
+
+预测器定向检查覆盖 BTB 发布延迟与索引冲突、方向饱和与局部历史、正负
+JAL/分支立即数修正、RAS 背压、推测调用去重、提交与恢复同拍、写入旁路及
+栈深度饱和/回绕。Frontend 对照同时检查输出有效信号、全部有效指令包、
+内存请求及响应 ready；并通过顺序取指、缓存命中、队列背压、延迟响应期间
+连续 16 次 redirect、调用返回和训练场景。比较中未发现周期或数据差异。
+
+临时验证源、生成 RTL、工具命令和原始日志均保存在上述构建目录，未恢复
+已删除的受版本控制测试。可在该目录已有基线及验证入口时重新执行：
+
+```sh
+python3 build/predictor-20261022/prepare_validation.py
+python3 build/predictor-20261022/generate_validation.py
+python3 build/predictor-20261022/simulate_validation.py
+```
+
+`provenance.json`、`results.json` 和 `logs/` 分别记录来源/工具链、结果及日志。
+清理构建目录会移除这些本地证据。此次尚未验证 Chisel 7.7 原生编译；
+`StudentTop` 仍为骨架，故未运行完整 CPU 官方正确性、perf 或综合，
+没有新的 IPC GEOMEAN、面积或 Fmax 数据。
