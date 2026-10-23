@@ -4,9 +4,7 @@ import chisel3._
 import chisel3.util._
 import scala.language.reflectiveCalls
 
-/** Control information shared by dispatch, scheduling and execution.
-  * Field names, widths and ordering follow single-issue-chisel v110.
-  */
+/** 指令译码后的控制信息。 */
 class Decoded extends Bundle {
   val rd = UInt(5.W)
   val rs1 = UInt(5.W)
@@ -15,7 +13,7 @@ class Decoded extends Bundle {
   val use2 = Bool()
   val writes = Bool()
   val imm = UInt(32.W)
-  val fn = UInt(3.W)
+  val fn = UInt(3.W) // 运算类型
   val sub = Bool()
   val pcA = Bool()
   val immB = Bool()
@@ -29,10 +27,7 @@ class Decoded extends Bundle {
   val illegal = Bool()
 }
 
-/** Combinational instruction decoder ported from the frozen v110 source.
-  * This preserves v110's legality checks and control outputs, including on
-  * illegal encodings. Core handles faults and suppresses writes to x0.
-  */
+/** 从指令中提取寄存器编号、立即数和控制信号。 */
 class Decoder extends Module {
   val io = IO(new Bundle {
     val inst = Input(UInt(32.W))
@@ -43,7 +38,7 @@ class Decoder extends Module {
   val opcode = inst(6, 0)
   val d = io.d
 
-  // Raw register fields remain available even when use1/use2 are false.
+  // 先清空控制信号，默认标记为非法。
   d := 0.U.asTypeOf(d)
   d.rd := inst(11, 7)
   d.rs1 := inst(19, 15)
@@ -53,13 +48,13 @@ class Decoder extends Module {
   d.illegal := true.B
 
   switch(opcode) {
-    is("h37".U) { // LUI
+    is("h37".U) { // LUI：加载高位立即数
       d.lui := true.B
       d.imm := Cat(inst(31, 12), 0.U(12.W))
       d.writes := true.B
       d.illegal := false.B
     }
-    is("h17".U) { // AUIPC: execute PC + U-immediate through the adder.
+    is("h17".U) { // AUIPC：PC 加立即数
       d.pcA := true.B
       d.immB := true.B
       d.fn := 0.U
@@ -67,46 +62,46 @@ class Decoder extends Module {
       d.writes := true.B
       d.illegal := false.B
     }
-    is("h6f".U) { // JAL
+    is("h6f".U) { // JAL：直接跳转
       d.jal := true.B
       d.imm := Util.sext(Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)))
       d.writes := true.B
       d.illegal := false.B
     }
-    is("h67".U) { // JALR
+    is("h67".U) { // JALR：寄存器地址跳转
       d.jalr := true.B
       d.use1 := true.B
       d.writes := true.B
       d.illegal := inst(14, 12) =/= 0.U
     }
-    is("h63".U) { // Conditional branches
+    is("h63".U) { // 条件分支
       d.branch := true.B
       d.use1 := true.B
       d.use2 := true.B
       d.imm := Util.sext(Cat(inst(31), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)))
       d.illegal := inst(14, 13) === 1.U
     }
-    is("h03".U) { // Loads; fn carries width and signedness to the load path.
+    is("h03".U) { // 读内存，fn 决定宽度和符号扩展
       d.load := true.B
       d.use1 := true.B
       d.writes := true.B
       d.illegal := inst(14, 12) === 3.U || inst(14, 12) >= 6.U
     }
-    is("h23".U) { // Stores
+    is("h23".U) { // 写内存
       d.store := true.B
       d.use1 := true.B
       d.use2 := true.B
       d.imm := Util.sext(Cat(inst(31, 25), inst(11, 7)))
       d.illegal := inst(14, 12) > 2.U
     }
-    is("h13".U) { // Register-immediate ALU operations
+    is("h13".U) { // 寄存器与立即数运算
       d.use1 := true.B
       d.immB := true.B
       d.writes := true.B
       d.sub := inst(30) && inst(14, 12) === 5.U
       d.illegal := false.B
     }
-    is("h33".U) { // Register-register ALU operations and the M extension
+    is("h33".U) { // 两个寄存器运算，含乘除法
       d.use1 := true.B
       d.use2 := true.B
       d.writes := true.B
@@ -114,7 +109,7 @@ class Decoder extends Module {
       d.muldiv := inst(31, 25) === 1.U
       d.illegal := false.B
     }
-    is("h0f".U) { // v110 accepts this opcode with no side effects.
+    is("h0f".U) { // 当前按空操作处理
       d.illegal := false.B
     }
   }
